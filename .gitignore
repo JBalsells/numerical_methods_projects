@@ -1,0 +1,37 @@
+# ── Python ──────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Entornos virtuales (los crea `make run`; no se versionan)
+.venv/
+venv/
+env/
+ENV/
+
+# Test / cobertura / linters / tipos
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+
+# Empaquetado
+*.egg-info/
+build/
+dist/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Editores / IDE
+.idea/
+.vscode/
+*.swp
+*~
+
+# Sistema operativo
+.DS_Store
+Thumbs.db

@@ -1,0 +1,56 @@
+# ── Configuración de la simulación de onda 2D ─────────────────────────
+# Toda la parametrización vive aquí (la ventana gráfica no tiene controles).
+# Editar y volver a correr `make run`.
+
+# Malla espacial uniforme (dx = dy = h)
+grid:
+  nx: 220
+  ny: 440
+  h: 0.5
+
+# Problema físico:  u_tt = c² ∇²u − 2·γ·u_t
+problem:
+  c: 1.0            # velocidad de la onda
+  damping: 0.02     # γ. Con lluvia conviene γ>0 para que las ondas se desvanezcan (agua real)
+  boundary: dirichlet     # borde: mur (absorbente) | dirichlet (pared fija) | neumann (libre)
+
+# Método numérico
+solver:
+  method: fdtd      # fdtd (leapfrog) | rk4 (Runge-Kutta 4º) | euler  (ver `make list`)
+                    # nota: rk4/euler NO soportan boundary: mur (usa dirichlet o neumann)
+  courant: 0.5      # C = c·dt/h. Límite de estabilidad: fdtd≤0.707, rk4≤1.0, euler=inestable
+
+# Animación
+simulation:
+  substeps: 3       # pasos de tiempo por frame (velocidad del tiempo simulado)
+
+# Display
+display:
+  mode: graphic     # graphic (colores) | matrix (números en terminal) | uq (Monte Carlo incertidumbre)
+  vmax: 1.0         # límite simétrico de color (cresta/valle = ±vmax)
+  interval_ms: 15   # milisegundos entre frames
+
+# Gotas iniciales (lista; vacía = arranca en calma). Coordenadas en índices de malla.
+initial_pulses: []
+
+# Lluvia Monte Carlo: proceso de Poisson de gotas sobre el agua
+rain:
+  enabled: true
+  rate: 0.8              # gotas por unidad de tiempo simulado (esperado). Sube = más lluvia
+  amp: [0.3, 0.9]        # rango de amplitud de cada gota
+  width: [2.0, 4.0]      # rango de ancho (radio gaussiano)
+  margin: 8              # margen al borde (no cae pegada al muro)
+  seed: null             # semilla fija = lluvia reproducible; null = aleatoria
+
+# Cuantificación de incertidumbre por Monte Carlo (solo con display.mode: uq)
+uq:
+  samples: 120           # nº de simulaciones (más = mejor estadística, más lento)
+  nx: 120                # malla propia de UQ (chica = rápida)
+  ny: 120
+  steps: 300             # pasos de tiempo por simulación
+  c_std: 0.1             # incertidumbre RELATIVA de c (0.1 = ±10%, Normal)
+  damping_std: 0.0       # incertidumbre absoluta de γ (Normal)
+  sensor: [0.75, 0.5]    # dónde se mide la QoI (fracción del dominio)
+  pulse: [0.5, 0.5]      # dónde cae la gota inicial (fracción)
+  seed: null             # semilla fija = reproducible
+  workers: 4             # procesos en paralelo (1 = serie)

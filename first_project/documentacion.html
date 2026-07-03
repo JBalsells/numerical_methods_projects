@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ecuación de onda 2D — Documentación completa</title>
+<style>
+  :root{
+    --bg:#04121d; --panel:#08283b; --panel2:#0b3350;
+    --primary:#7fe0ff; --text:#cfe6f2; --muted:#8fb2c6;
+    --accent:#6ff0c8; --danger:#ff6b6b; --amber:#ffcf8f;
+    --grid:#123449; --code:#0a1f2e; --border:#1c4a67;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.65;font-size:16px}
+  .wrap{display:flex;max-width:1200px;margin:0 auto}
+  nav.toc{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;
+    width:280px;flex:0 0 280px;padding:22px 14px;border-right:1px solid var(--border);
+    background:linear-gradient(180deg,#062033,#04121d)}
+  nav.toc h2{font-size:.72rem;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--primary);margin:16px 0 6px}
+  nav.toc a{display:block;color:var(--muted);text-decoration:none;font-size:.86rem;
+    padding:2px 8px;border-radius:6px}
+  nav.toc a:hover{color:var(--primary);background:#0c2c42}
+  main{flex:1;min-width:0;padding:32px 42px 140px}
+  h1{font-size:2rem;color:#fff;margin:.2em 0}
+  .sub{color:var(--muted);font-size:1.05rem;margin-bottom:6px}
+  h2.sec{font-size:1.45rem;color:var(--primary);margin:2.3em 0 .4em;
+    padding-bottom:.25em;border-bottom:1px solid var(--border)}
+  .part{margin:2.6em 0 .2em;font-size:.8rem;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--accent);font-weight:700}
+  h3{color:#bfeeff;margin:1.5em 0 .3em;font-size:1.12rem}
+  h4{color:var(--amber);margin:1.1em 0 .2em;font-size:.98rem}
+  p{margin:.6em 0}
+  code{font-family:"SF Mono",Menlo,Consolas,monospace;background:var(--code);
+    color:#bfeeff;padding:1px 6px;border-radius:5px;font-size:.87em}
+  pre{background:var(--code);border:1px solid var(--border);border-radius:10px;
+    padding:14px 16px;overflow-x:auto;font-size:.83rem;line-height:1.5}
+  pre code{background:none;padding:0;color:#d5ecf7}
+  .formula{background:linear-gradient(90deg,#082436,#0a2c42);border:1px solid var(--border);
+    border-left:4px solid var(--primary);border-radius:8px;padding:13px 18px;margin:13px 0;
+    font-family:"SF Mono",Menlo,monospace;font-size:1.02rem;color:#eafcff;overflow-x:auto}
+  .note{background:#0a2436;border:1px solid var(--border);border-left:4px solid var(--accent);
+    border-radius:8px;padding:10px 16px;margin:13px 0;color:var(--text)}
+  .warn{border-left-color:var(--amber)}
+  .bad{border-left-color:var(--danger)}
+  table{border-collapse:collapse;width:100%;margin:13px 0;font-size:.88rem}
+  th,td{border:1px solid var(--border);padding:7px 10px;text-align:left;vertical-align:top}
+  th{background:var(--panel);color:var(--primary)}
+  tr:nth-child(even) td{background:#071e2d}
+  .tag{display:inline-block;background:var(--panel2);color:var(--primary);border:1px solid var(--border);
+    border-radius:20px;padding:0 9px;font-size:.72rem;margin:1px}
+  .k{color:var(--accent)} .c{color:#6b90a5;font-style:italic}
+  .lead{font-size:1.06rem}
+  hr{border:none;border-top:1px solid var(--border);margin:2em 0}
+  .pill{font-size:.7rem;color:var(--bg);background:var(--primary);border-radius:6px;
+    padding:1px 7px;font-weight:700}
+  svg{max-width:100%;height:auto}
+  @media(max-width:920px){.wrap{display:block}nav.toc{position:static;height:auto;width:auto;
+    border-right:none;border-bottom:1px solid var(--border)}main{padding:22px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav class="toc">
+  <h2>Empezar</h2>
+  <a href="#intro">Introducción y modelo mental</a>
+  <a href="#tree">Mapa del proyecto</a>
+  <h2>Parte 1 · Teoría</h2>
+  <a href="#eq">1. La ecuación de onda 2D</a>
+  <a href="#disc">2. De lo continuo a la malla</a>
+  <a href="#df">3. Diferencias finitas · Laplaciano</a>
+  <a href="#fdtd">4. Esquema FDTD (leapfrog)</a>
+  <a href="#mol">5. Método de líneas (RK/Euler)</a>
+  <a href="#metodos">6. Métodos disponibles</a>
+  <a href="#porque">7. ¿Por qué estos métodos?</a>
+  <a href="#cfl">8. Estabilidad (CFL)</a>
+  <a href="#borde">9. Condiciones de frontera</a>
+  <a href="#init">10. Condiciones iniciales / fuentes</a>
+  <a href="#mc1">11. Monte Carlo · lluvia</a>
+  <a href="#mc2">12. Monte Carlo · UQ</a>
+  <a href="#energia">13. Energía</a>
+  <a href="#viz">14. Matriz → colores</a>
+  <h2>Parte 2 · Software</h2>
+  <a href="#arq">15. Arquitectura multicapa</a>
+  <a href="#archivos">16. Recorrido por cada archivo</a>
+  <a href="#patrones">17. Patrones de diseño</a>
+  <a href="#flujo">18. Flujo de datos</a>
+  <a href="#vars">19. Variables clave</a>
+  <a href="#config">20. config.yaml</a>
+  <a href="#modos">21. Los tres modos</a>
+  <a href="#correr">22. Cómo correr</a>
+  <a href="#tests">23. Tests</a>
+  <a href="#historia">24. Decisiones de diseño</a>
+  <a href="#glosario">25. Glosario</a>
+</nav>
+
+<main>
+<header id="intro">
+  <div class="sub">Laboratorio de simulación · métodos numéricos</div>
+  <h1>Ecuación de onda 2D — Documentación completa</h1>
+  <p class="lead">Este proyecto <b>simula ondas en una superficie</b> (piensa en gotas de lluvia
+  sobre agua) resolviendo numéricamente la <b>ecuación de onda en 2 dimensiones</b>. Está escrito
+  en Python, con una <b>arquitectura por capas</b>, tres <b>métodos numéricos</b> intercambiables,
+  y dos usos de <b>Monte Carlo</b> (lluvia aleatoria y cuantificación de incertidumbre).</p>
+
+  <h3>El modelo mental (léelo primero)</h3>
+  <p>Todo se reduce a tres ideas:</p>
+  <ol>
+    <li><b>Una matriz de números.</b> El agua se representa como una grilla (matriz) donde cada
+    celda guarda la <b>altura</b> de la superficie en ese punto.</li>
+    <li><b>Una regla numérica.</b> En cada instante, se actualiza cada celda mirando a sus vecinas.
+    Repetido en un bucle, eso <b>es</b> una onda propagándose.</li>
+    <li><b>El color es solo visualización.</b> Cada número se pinta de un color para que lo veas;
+    la física vive en los números, no en los colores.</li>
+  </ol>
+  <p class="note">Si entiendes esas tres ideas y la <b>fórmula de actualización</b> (§4), entiendes
+  el 90% del proyecto. El resto (lluvia, incertidumbre, capas, config) es andamiaje alrededor.</p>
+  <p><span class="pill">Cómo leer</span> La <b>Parte 1</b> explica la física y la matemática (qué se
+  calcula y por qué). La <b>Parte 2</b> explica el software (cómo está organizado el código,
+  archivo por archivo). Puedes leer solo la Parte 1 para entender la simulación, o solo la Parte 2
+  para orientarte en el código.</p>
+</header>
+
+<h2 class="sec" id="tree">Mapa del proyecto (árbol de archivos)</h2>
+<p>Todo el proyecto (sin el entorno virtual <code>.venv/</code>, que se autogenera):</p>
+<pre><code>ecuacion_de_onda_2d_espacial/
+├── config.yaml            <span class="c"># TODA la parametrización (editas esto)</span>
+├── main.py                <span class="c"># punto de entrada (make run)</span>
+├── Makefile               <span class="c"># comandos: run / test / list / clean</span>
+├── requirements.txt       <span class="c"># dependencias: numpy, matplotlib, pyyaml, pytest</span>
+├── README.md              <span class="c"># resumen breve</span>
+├── documentacion.html     <span class="c"># este documento</span>
+│
+├── onda2d/                <span class="c"># el paquete (el código, en 4 capas)</span>
+│   ├── config.py          <span class="c"># TRANSVERSAL: tema visual "agua"</span>
+│   ├── settings.py        <span class="c"># TRANSVERSAL: carga config.yaml → AppConfig</span>
+│   │
+│   ├── domain/            <span class="c"># CAPA 1 · física pura (no depende de nadie)</span>
+│   │   ├── grid.py        <span class="c">#   Grid2D: la malla</span>
+│   │   ├── problem.py     <span class="c">#   WaveProblem: parámetros físicos</span>
+│   │   ├── boundary.py    <span class="c">#   Boundary: tipos de frontera</span>
+│   │   └── operators.py   <span class="c">#   laplacian_5point: el operador ∇²</span>
+│   │
+│   ├── solvers/           <span class="c"># CAPA 2 · métodos numéricos (Strategy)</span>
+│   │   ├── base.py        <span class="c">#   Solver: la interfaz común</span>
+│   │   ├── registry.py    <span class="c">#   @solver / create_solver: registro</span>
+│   │   ├── fdtd.py        <span class="c">#   FDTDSolver: leapfrog explícito</span>
+│   │   └── method_of_lines.py <span class="c"># MoLSolver + RK4Solver + EulerSolver</span>
+│   │
+│   ├── application/       <span class="c"># CAPA 3 · orquestación</span>
+│   │   ├── simulation.py  <span class="c">#   Simulation: la fachada</span>
+│   │   ├── builder.py     <span class="c">#   build_simulation / build_rain</span>
+│   │   ├── diagnostics.py <span class="c">#   energy / amplitude</span>
+│   │   ├── rain.py        <span class="c">#   RainMonteCarlo: lluvia Poisson</span>
+│   │   └── uq.py          <span class="c">#   MonteCarloUQ: incertidumbre</span>
+│   │
+│   └── presentation/     <span class="c"># CAPA 4 · interfaz</span>
+│       └── app.py         <span class="c">#   ventana matplotlib / salida por consola</span>
+│
+└── tests/                 <span class="c"># pruebas por capa (44 tests)</span>
+    ├── test_domain.py  · test_solvers.py  · test_application.py
+    └── test_settings.py · test_rain.py    · test_uq.py</code></pre>
+
+<!-- ============================ PARTE 1 ============================ -->
+<div class="part">Parte 1 · Teoría — la física y la matemática</div>
+
+<h2 class="sec" id="eq">1. La ecuación de onda 2D</h2>
+<p>El comportamiento de una membrana, la superficie del agua o una onda de sonido se describe con
+una <b>ecuación en derivadas parciales</b> (PDE). En 2 dimensiones espaciales, con amortiguamiento:</p>
+<div class="formula">∂²u/∂t² &nbsp;=&nbsp; c² ( ∂²u/∂x² + ∂²u/∂y² ) &nbsp;−&nbsp; 2γ · ∂u/∂t</div>
+<table>
+<tr><th>Símbolo</th><th>Qué es</th></tr>
+<tr><td><code>u(x,y,t)</code></td><td>La <b>altura</b> de la superficie en el punto (x,y) y el tiempo t. Es lo que calculamos.</td></tr>
+<tr><td><code>∂²u/∂t²</code></td><td>La <b>aceleración</b> vertical de cada punto.</td></tr>
+<tr><td><code>∇²u = ∂²u/∂x² + ∂²u/∂y²</code></td><td>El <b>Laplaciano</b>: mide cuánto “sobresale” un punto respecto al promedio de su vecindad (su curvatura).</td></tr>
+<tr><td><code>c</code></td><td>La <b>velocidad</b> de propagación de la onda.</td></tr>
+<tr><td><code>γ</code> (gamma)</td><td><b>Amortiguamiento</b>: fricción que hace que la onda pierda energía (0 = sin pérdidas).</td></tr>
+</table>
+<p class="note"><b>Intuición.</b> La ecuación dice: <i>«cada punto acelera en proporción a cuánto está
+fuera de sintonía con sus vecinos»</i>. Si un punto queda por debajo de su entorno, el Laplaciano lo
+empuja hacia arriba; si queda por encima, lo empuja hacia abajo. Ese tira-y-afloja, con inercia, es
+una onda. El término <code>−2γ·∂u/∂t</code> frena el movimiento (fricción proporcional a la velocidad).</p>
+
+<h2 class="sec" id="disc">2. De lo continuo a la malla</h2>
+<p>La ecuación está escrita para un espacio <b>continuo</b> (infinitos puntos). Una computadora no
+puede con infinitos puntos, así que <b>discretizamos</b>: reemplazamos el plano por una <b>malla</b>
+de celdas —una matriz de <code>nx × ny</code>— separadas una distancia <code>h</code>
+(<code>dx = dy = h</code>). Cada celda guarda un número: <code>u[i,j]</code> = la altura ahí.</p>
+<p>El tiempo también se discretiza en pasos de tamaño <code>Δt</code>. Así, en vez de una función
+continua, tenemos una <b>secuencia de matrices</b> (una por instante), y una regla para pasar de
+una a la siguiente. Ese es el corazón de todos los <b>métodos numéricos</b>: cambiar el cálculo
+continuo por operaciones sobre una grilla finita.</p>
+
+<h2 class="sec" id="df">3. Diferencias finitas y el Laplaciano de 5 puntos</h2>
+<p>¿Cómo aproximamos una derivada con celdas? Con <b>diferencias finitas</b>. La segunda derivada
+centrada (2º orden de precisión) es:</p>
+<div class="formula">f''(x) &nbsp;≈&nbsp; ( f(x+h) − 2·f(x) + f(x−h) ) / h²</div>
+<p>Aplicándolo en x e y y sumando, obtenemos el <b>Laplaciano de 5 puntos</b> (el centro y sus 4
+vecinos: arriba, abajo, izquierda, derecha):</p>
+<div class="formula">∇²u[i,j] ≈ ( u[i+1,j] + u[i−1,j] + u[i,j+1] + u[i,j−1] − 4·u[i,j] ) / h²</div>
+<svg viewBox="0 0 300 150" role="img" aria-label="stencil de 5 puntos">
+  <style>.cell{fill:#08283b;stroke:#1c4a67}.cc{fill:#0b3350;stroke:#7fe0ff}
+    .t{fill:#cfe6f2;font-family:monospace;font-size:13px;text-anchor:middle}</style>
+  <rect class="cell" x="120" y="20"  width="40" height="40"/><text class="t" x="140" y="45">i-1,j</text>
+  <rect class="cell" x="60"  y="60"  width="40" height="40"/><text class="t" x="80"  y="85">i,j-1</text>
+  <rect class="cc"   x="120" y="60"  width="40" height="40"/><text class="t" x="140" y="85">i,j</text>
+  <rect class="cell" x="180" y="60"  width="40" height="40"/><text class="t" x="200" y="85">i,j+1</text>
+  <rect class="cell" x="120" y="100" width="40" height="40"/><text class="t" x="140" y="125">i+1,j</text>
+</svg>
+<p>En el código esto es <code>domain/operators.py → laplacian_5point()</code>, hecho <b>vectorizado</b>
+con numpy (rebanadas de arrays, sin bucles Python → mucho más rápido):</p>
+<pre><code>lap[1:-1,1:-1] = (u[2:,1:-1] + u[:-2,1:-1]
+               + u[1:-1,2:] + u[1:-1,:-2]
+               - 4*u[1:-1,1:-1]) / h**2</code></pre>
+
+<h2 class="sec" id="fdtd">4. El esquema FDTD (leapfrog) — el método por defecto</h2>
+<p>Para el tiempo usamos la misma idea (diferencia centrada de 2º orden) sobre <b>tres instantes</b>:</p>
+<div class="formula">∂²u/∂t² ≈ ( u<sup>n+1</sup> − 2u<sup>n</sup> + u<sup>n−1</sup> ) / Δt²</div>
+<p>Por eso el método FDTD guarda <b>tres “fotos” del campo</b>: <code>u_prev</code> (instante n−1),
+<code>u</code> (n, el actual) y <code>u_next</code> (n+1, el que calculamos). Sustituyendo tiempo y
+espacio en la PDE y despejando <code>u_next</code> (con el amortiguamiento tratado de forma
+semi-implícita para más robustez) se obtiene la <b>fórmula de actualización</b>:</p>
+<div class="formula">u<sup>n+1</sup> = [ 2u<sup>n</sup> − (1 − γΔt)·u<sup>n−1</sup> + (cΔt)²·∇²u<sup>n</sup> ] / (1 + γΔt)</div>
+<p>Sin amortiguamiento (γ=0) se simplifica a la forma clásica <i>leapfrog</i> (“salto de rana”):</p>
+<div class="formula">u<sup>n+1</sup> = 2u<sup>n</sup> − u<sup>n−1</sup> + (cΔt)²·∇²u<sup>n</sup></div>
+<p class="note"><b>La única línea que hay que entender.</b> «El siguiente valor es su tendencia actual
+(<code>2u − u_prev</code>, es decir, seguir moviéndose como venía) corregida por la curvatura del
+entorno (<code>∇²u</code>)». Está en <code>solvers/fdtd.py → _one_step()</code>. <b>FDTD</b> =
+<i>Finite-Difference Time-Domain</i>. Es <b>explícito</b>: cada paso se calcula directo de los dos
+anteriores, sin resolver ningún sistema de ecuaciones.</p>
+
+<h2 class="sec" id="mol">5. Método de líneas (para Runge–Kutta y Euler)</h2>
+<p>La ecuación de onda es de <b>2º orden en el tiempo</b>, pero Runge–Kutta y Euler son integradores
+de <b>1er orden</b> (para <code>dy/dt = f(y)</code>). El puente es el <b>método de líneas</b>:
+discretizar solo el espacio e introducir la <b>velocidad</b> <code>v = ∂u/∂t</code> como segunda
+variable. Así la PDE de 2º orden se vuelve un <b>sistema de 1er orden</b>:</p>
+<div class="formula">du/dt = v &nbsp;&nbsp;;&nbsp;&nbsp; dv/dt = c²·∇²u − 2γ·v</div>
+<p>Ese sistema <code>(u, v)</code> se integra con cualquier método de ODEs. Está en
+<code>solvers/method_of_lines.py</code>. Nota clave: estos métodos guardan un estado <b>(u, v)</b>
+distinto a los 3 instantes del FDTD — lo que demuestra que la interfaz común (§17, Strategy) los hace
+intercambiables aunque por dentro sean diferentes.</p>
+
+<h2 class="sec" id="metodos">6. Los métodos numéricos disponibles</h2>
+<p>Se elige en <code>config.yaml</code> con <code>solver.method</code>. Hay tres registrados
+(<code>make list</code> los muestra):</p>
+<table>
+<tr><th>Método</th><th>Familia</th><th>Orden</th><th>Estabilidad (Courant)</th><th>Fronteras</th><th>Estado interno</th></tr>
+<tr><td><code>fdtd</code> <span class="tag">por defecto</span></td><td>Dif. finitas explícitas (leapfrog)</td><td>2º</td><td>C ≤ 0.707 (1/√2)</td><td>dirichlet, neumann, mur</td><td>u_prev, u, u_next</td></tr>
+<tr><td><code>rk4</code></td><td>Método de líneas + Runge–Kutta 4º</td><td>4º</td><td>C ≤ 1.0</td><td>dirichlet, neumann</td><td>u, v</td></tr>
+<tr><td><code>euler</code></td><td>Método de líneas + Euler explícito</td><td>1º</td><td><b>inestable</b> para ondas</td><td>dirichlet, neumann</td><td>u, v</td></tr>
+</table>
+<p><b>RK4</b> promedia 4 evaluaciones de la pendiente por paso (por eso es preciso). <b>Euler</b> da
+un solo paso recto con la pendiente inicial (por eso es tosco).</p>
+
+<h2 class="sec" id="porque">7. ¿Por qué estos métodos? (y por qué no otros)</h2>
+<p>El <b>FDTD explícito</b> es el default por: simplicidad (una expresión por celda), 2º orden,
+vectorizable (rápido con numpy), e intuitivo (cada celda habla con sus 4 vecinas). Sus contras:
+la restricción CFL (§8) y algo de dispersión numérica.</p>
+<h4>Métodos que NO se usan y por qué</h4>
+<table>
+<tr><th>Método</th><th>Por qué no (aquí)</th></tr>
+<tr><td><b>Newton</b> (Newton–Raphson)</td><td><b>No es un integrador temporal.</b> Newton sirve para <b>encontrar raíces</b> de ecuaciones no lineales, no para avanzar en el tiempo una PDE. Solo aparecería <i>dentro</i> de un método implícito con no-linealidades — y esta ecuación es lineal.</td></tr>
+<tr><td>Implícito (Crank–Nicolson)</td><td>Estable sin límite de Δt, pero exige <b>resolver un sistema lineal</b> cada paso. Complejidad innecesaria aquí.</td></tr>
+<tr><td>Espectral (FFT)</td><td>Muy preciso, pero asume fronteras periódicas y es menos intuitivo.</td></tr>
+<tr><td>Elementos finitos (FEM)</td><td>Ideal para geometrías irregulares; aquí la malla es un rectángulo.</td></tr>
+<tr><td>Monte Carlo <i>como solver</i></td><td><b>No aplica:</b> los métodos MC para PDE (Feynman–Kac) sirven para ecuaciones parabólicas/elípticas (calor, Laplace). La de onda es <b>hiperbólica</b>. Por eso Monte Carlo se usa para otras cosas (§11–12).</td></tr>
+</table>
+
+<h2 class="sec" id="cfl">8. Estabilidad: la condición CFL</h2>
+<p>Un método explícito solo es estable si la información no “viaja” más de una celda por paso. Eso se
+mide con el <b>número de Courant</b>:</p>
+<div class="formula">C = c · Δt / h</div>
+<p>Para el FDTD en 2D, la condición de estabilidad (Courant–Friedrichs–Lewy) es <code>C ≤ 1/√2 ≈
+0.7071</code>. Si se supera, la solución <b>diverge</b> (explota). El umbral <b>depende del método</b>:
+<code>rk4</code> aguanta hasta <code>C ≤ 1.0</code>; <code>euler</code> es inestable para cualquier
+<code>C&gt;0</code>. Cada solver expone su límite en <code>CFL_LIMIT</code>.</p>
+<p>Detalle de diseño clave: el paso <code>Δt</code> <b>se deriva</b> del Courant elegido
+(<code>Δt = C·h/c</code>), no se fija aparte. Así el parámetro <code>courant</code> del config controla
+directamente la estabilidad — ponlo en 0.5 (estable) o súbelo por encima del límite para <b>ver</b>
+la inestabilidad. Es una herramienta didáctica.</p>
+<p class="note"><b>Dispersión numérica.</b> Un efecto secundario de discretizar: ondas de distinta
+longitud viajan a velocidades ligeramente distintas (un error del método). Se reduce con malla más
+fina. RK4/9-puntos la reducen respecto al FDTD básico.</p>
+
+<h2 class="sec" id="borde">9. Condiciones de frontera</h2>
+<p>La malla tiene bordes: hay que decidir qué pasa ahí. Se declaran en <code>domain/boundary.py</code>
+(<code>Boundary</code>) y cada método las aplica a su manera. <b>Mur solo lo soporta <code>fdtd</code></b>;
+los métodos de líneas usan dirichlet o neumann.</p>
+<table>
+<tr><th>Tipo</th><th>Matemática</th><th>Física</th><th>En el código</th></tr>
+<tr><td><b>Dirichlet</b></td><td><code>u = 0</code> en el borde</td><td>Pared rígida fija: la onda <b>rebota invirtiendo la fase</b> (una cresta vuelve como valle).</td><td>El borde se fuerza a 0.</td></tr>
+<tr><td><b>Neumann</b></td><td><code>∂u/∂n = 0</code></td><td>Extremo libre: la onda <b>rebota sin invertir</b>.</td><td>El borde copia al vecino interior.</td></tr>
+<tr><td><b>Mur</b> (absorbente)</td><td>1er orden de Mur</td><td>La onda <b>sale sin rebotar</b> (dominio “abierto”, sin eco).</td><td><code>k=(cΔt−h)/(cΔt+h)</code>; el borde extrapola del interior.</td></tr>
+</table>
+<p class="note"><b>Cómo verlo.</b> En modo matriz con <code>boundary: dirichlet</code>, el marco de la
+matriz siempre vale <code>+0.00</code> (la pared fija). Con <code>mur</code>, el borde deja de ser
+cero: la onda “se va”.</p>
+
+<h2 class="sec" id="init">10. Condiciones iniciales y fuentes (las gotas)</h2>
+<p>El estado inicial suele ser calma (todo 0). Se inyectan <b>gotas</b>: un bulto <b>gaussiano</b>
+(<code>domain/grid.py → gaussian()</code>):</p>
+<div class="formula">gota(x,y) = A · exp( −((x−cx)² + (y−cy)²) / (2·w²) )</div>
+<p>La gota se suma <b>tanto a <code>u</code> como a <code>u_prev</code></b> (o deja <code>v=0</code>
+en los métodos de líneas). ¿Por qué? Para que la <b>velocidad inicial sea ≈ 0</b>: una gota
+“soltada desde el reposo”, sin transitorios bruscos. <code>A</code> = amplitud, <code>w</code> = ancho.</p>
+
+<h2 class="sec" id="mc1">11. Monte Carlo (1): la lluvia</h2>
+<p><b>Monte Carlo</b> = usar <b>muestreo aleatorio</b> para modelar o calcular algo. Primer uso: la
+lluvia (<code>application/rain.py → RainMonteCarlo</code>). Las gotas se modelan como un
+<b>proceso de Poisson</b>: en un intervalo <code>Δt</code> caen</p>
+<div class="formula">N ~ Poisson( rate · Δt )</div>
+<p>gotas, cada una con posición, amplitud y ancho <b>uniformes</b> en sus rangos. Monte Carlo genera
+<i>cuándo</i> y <i>dónde</i> caen; el solver propaga las ondas que producen.</p>
+<p class="note"><b>¿Por qué Poisson?</b> Es el modelo estándar de “eventos independientes al azar con
+una tasa media” — justo la lluvia. Con una <b>semilla</b> fija (<code>seed</code>) es reproducible
+(<code>np.random.default_rng(seed)</code>).</p>
+<p class="warn note"><b>Amortiguamiento.</b> Con lluvia continua conviene <code>γ&gt;0</code>: si no, la
+energía se acumula y la superficie se satura. Con algo de γ las ondas se desvanecen y se llega a un
+<b>régimen estacionario</b> (agua real).</p>
+
+<h2 class="sec" id="mc2">12. Monte Carlo (2): cuantificación de incertidumbre (UQ)</h2>
+<p>El mismo patrón (muestreo con semilla) se reutiliza para <b>UQ</b> (<code>application/uq.py →
+MonteCarloUQ</code>, modo <code>display.mode: uq</code>). La pregunta que responde: <i>«si un
+parámetro es incierto, ¿cuánta incertidumbre hay en el resultado?»</i></p>
+<p>Se corren <b>N simulaciones</b> con la velocidad <code>c</code> muestreada de una Normal
+(y opcionalmente <code>γ</code>), y en cada una se mide una <b>cantidad de interés (QoI)</b> en un
+<b>sensor</b>: la <b>amplitud pico</b> y el <b>tiempo de llegada</b> de la onda. Luego se agregan
+estadísticas (media, σ, percentiles) y se dibujan histogramas.</p>
+<p>Reutiliza <code>build_simulation</code> (una sim por muestra) y la fachada. Como cada corrida es
+independiente, se <b>paraleliza</b> con <code>ProcessPoolExecutor</code> (multiprocessing real —
+aquí sí conviene, a diferencia de la animación en vivo).</p>
+<p class="note"><b>Hallazgo típico.</b> Sin amortiguamiento, la <b>amplitud pico</b> en un punto es casi
+<b>insensible a <code>c</code></b> (la velocidad cambia <i>cuándo</i> llega la onda, no su altura); el
+<b>tiempo de llegada</b> es la QoI que hereda la incertidumbre de <code>c</code>. UQ hace visible
+exactamente eso.</p>
+
+<h2 class="sec" id="energia">13. Diagnóstico de energía</h2>
+<p><code>application/diagnostics.py → energy()</code> estima la energía total como cinética +
+potencial (unidades arbitrarias). Sirve para verificar que sin pérdidas se conserva (aprox.) y que
+con amortiguamiento baja:</p>
+<div class="formula">E ≈ Σ [ ½·v² + ½·c²·|∇u|² ] · h² &nbsp;&nbsp;<span class="c"># v = velocidad ≈ (u − u_prev)/Δt</span></div>
+
+<h2 class="sec" id="viz">14. De la matriz a los colores</h2>
+<p>La física vive en los <b>números</b> de la matriz. El color es solo una <b>traducción</b>: un
+<i>colormap</i> divergente mapea cada valor a un color (<code>config.py → WATER_CMAP</code>):</p>
+<svg viewBox="0 0 320 70" role="img" aria-label="degradado de agua">
+  <defs><linearGradient id="g" x1="0" x2="1">
+    <stop offset="0" stop-color="#012a4a"/><stop offset=".5" stop-color="#06263a"/>
+    <stop offset=".68" stop-color="#1f8fb5"/><stop offset=".85" stop-color="#7fdff0"/>
+    <stop offset="1" stop-color="#eafcff"/></linearGradient></defs>
+  <rect x="10" y="14" width="300" height="24" rx="6" fill="url(#g)"/>
+  <text x="10" y="56" fill="#8fb2c6" font-size="11">valle (−)</text>
+  <text x="150" y="56" fill="#8fb2c6" font-size="11">reposo (0)</text>
+  <text x="255" y="56" fill="#8fb2c6" font-size="11">cresta (+)</text>
+</svg>
+<p>Si borraras el color, la simulación sería idéntica: podrías imprimir los números (eso hace el
+<b>modo matriz</b>, §21). El color es para que el ojo lea decenas de miles de números de un vistazo.</p>
+
+<!-- ============================ PARTE 2 ============================ -->
+<div class="part">Parte 2 · Software — arquitectura e implementación</div>
+
+<h2 class="sec" id="arq">15. Arquitectura multicapa</h2>
+<p>El código usa <b>arquitectura por capas</b> con una regla de oro: las dependencias apuntan
+<b>hacia adentro</b>. El núcleo (dominio) no depende de nadie; nadie depende de la presentación.
+Eso permite cambiar una parte sin romper las demás (p. ej. cambiar la UI sin tocar la física, o
+agregar un método sin tocar la UI).</p>
+<svg viewBox="0 0 720 150" role="img" aria-label="diagrama de capas">
+  <style>
+    .box{fill:#08283b;stroke:#1c4a67;stroke-width:1.5}
+    .lbl{fill:#7fe0ff;font-size:14px;font-weight:700;font-family:monospace}
+    .desc{fill:#8fb2c6;font-size:10.5px;font-family:monospace}
+    .arw{stroke:#6ff0c8;stroke-width:2;fill:none;marker-end:url(#ah)}
+  </style>
+  <defs><marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+    <path d="M0,0 L7,3 L0,6 Z" fill="#6ff0c8"/></marker></defs>
+  <rect class="box" x="8"   y="45" width="150" height="60" rx="10"/>
+  <text class="lbl" x="22" y="72">presentation</text><text class="desc" x="22" y="90">app.py</text>
+  <rect class="box" x="205" y="45" width="150" height="60" rx="10"/>
+  <text class="lbl" x="219" y="72">application</text><text class="desc" x="219" y="90">facade·builder·rain·uq</text>
+  <rect class="box" x="402" y="45" width="150" height="60" rx="10"/>
+  <text class="lbl" x="416" y="72">domain</text><text class="desc" x="416" y="90">grid·problem·operators</text>
+  <rect class="box" x="567" y="45" width="145" height="60" rx="10"/>
+  <text class="lbl" x="581" y="72">solvers</text><text class="desc" x="581" y="90">fdtd·rk4·euler</text>
+  <path class="arw" d="M158,75 L203,75"/>
+  <path class="arw" d="M355,75 L400,75"/>
+  <path class="arw" d="M567,75 L554,75"/>
+  <text class="desc" x="250" y="25">config.py (tema) · settings.py (config.yaml)  =  transversal</text>
+  <text class="desc" x="10" y="135">dominio ← solvers · aplicación → (dominio+solvers) · presentación → aplicación</text>
+</svg>
+
+<h2 class="sec" id="archivos">16. Recorrido por cada archivo</h2>
+
+<h3>Transversal (usada por varias capas)</h3>
+<table>
+<tr><th>Archivo</th><th>Contenido</th></tr>
+<tr><td><code>onda2d/config.py</code></td><td>Tema visual “agua”: <code>WATER_BG</code> (fondo), <code>WATER_COLORS</code> (paleta), <code>WATER_CMAP</code> (colormap divergente), <code>MPL_STYLE</code> y <code>apply_mpl_style()</code>.</td></tr>
+<tr><td><code>onda2d/settings.py</code></td><td>Carga de configuración: <code>AppConfig</code> (dataclass con todos los parámetros), <code>DEFAULTS</code> (valores por defecto), <code>load_config()</code> (lee el YAML), <code>_deep_merge</code> (mezcla config+defaults), <code>_valid_mode</code>/<code>DISPLAY_MODES</code> (valida el modo). Valida también <code>boundary</code>.</td></tr>
+</table>
+
+<h3>Capa 1 · Dominio (<code>onda2d/domain/</code>) — física pura, no importa a nadie</h3>
+<table>
+<tr><th>Archivo</th><th>Contenido</th></tr>
+<tr><td><code>grid.py</code></td><td><code>Grid2D(nx, ny, h)</code>: la malla (dataclass inmutable). Métodos: <code>shape</code>, <code>zeros()</code>, <code>gaussian(cx,cy,amp,width)</code> (una gota), <code>in_bounds(cx,cy)</code>.</td></tr>
+<tr><td><code>problem.py</code></td><td><code>WaveProblem(c, damping, boundary)</code>: los parámetros físicos (el <i>qué</i>). Normaliza <code>boundary</code> a <code>Boundary</code>.</td></tr>
+<tr><td><code>boundary.py</code></td><td><code>Boundary</code>: <code>Enum</code> con <code>DIRICHLET</code>, <code>NEUMANN</code>, <code>MUR</code>.</td></tr>
+<tr><td><code>operators.py</code></td><td><code>laplacian_5point(u, h)</code>: el operador ∇² de 5 puntos, vectorizado. Reutilizable por cualquier método.</td></tr>
+</table>
+
+<h3>Capa 2 · Solvers (<code>onda2d/solvers/</code>) — métodos numéricos, dependen solo del dominio</h3>
+<table>
+<tr><th>Archivo</th><th>Contenido</th></tr>
+<tr><td><code>base.py</code></td><td><code>Solver</code> (clase abstracta): la <b>interfaz común</b> (Strategy). Define <code>dt</code>, <code>courant</code>, <code>is_stable</code>, <code>step()</code>, <code>field()</code>, <code>velocity_field()</code>, <code>inject()</code>, <code>reset()</code>. Cada método concreto la implementa.</td></tr>
+<tr><td><code>registry.py</code></td><td>El registro de métodos: decorador <code>@solver("nombre")</code>, <code>create_solver(nombre, …)</code> (fábrica) y <code>available()</code> (lista).</td></tr>
+<tr><td><code>fdtd.py</code></td><td><code>FDTDSolver</code> (leapfrog explícito). Estado <code>u_prev/u/u_next</code>. <code>_one_step()</code> (la fórmula), <code>_apply_boundary()</code> (dirichlet/neumann/mur), <code>CFL_LIMIT = 1/√2</code>.</td></tr>
+<tr><td><code>method_of_lines.py</code></td><td><code>MoLSolver</code> (base, patrón Template Method: estado <code>(u,v)</code>, <code>_rhs</code>, fronteras, bucle <code>step</code>) + <code>RK4Solver</code> (<code>@solver "rk4"</code>) y <code>EulerSolver</code> (<code>@solver "euler"</code>), que solo implementan <code>_advance()</code>.</td></tr>
+</table>
+
+<h3>Capa 3 · Aplicación (<code>onda2d/application/</code>) — orquesta dominio + solvers</h3>
+<table>
+<tr><th>Archivo</th><th>Contenido</th></tr>
+<tr><td><code>simulation.py</code></td><td><code>Simulation</code>: la <b>fachada</b>. Cablea grid+problem+solver y expone una API simple: <code>step</code>, <code>add_pulse</code>, <code>reset</code>, <code>field</code>, <code>amplitude</code>, <code>energy</code>, y lectura de todos los parámetros. La UI habla solo con esto.</td></tr>
+<tr><td><code>builder.py</code></td><td><code>build_simulation(cfg)</code> y <code>build_rain(cfg, grid)</code>: ensamblan la simulación y la lluvia desde el config. Aíslan a la presentación de los constructores del dominio.</td></tr>
+<tr><td><code>diagnostics.py</code></td><td>Funciones puras: <code>amplitude(field)</code> (máxima magnitud) y <code>energy(field, velocity, h, c)</code>.</td></tr>
+<tr><td><code>rain.py</code></td><td><code>RainMonteCarlo</code>: lluvia Poisson. <code>rain_on(sim, Δt)</code> (inyecta gotas del intervalo), <code>sample_drop()</code>, <code>from_config()</code>, contador <code>total_drops</code>.</td></tr>
+<tr><td><code>uq.py</code></td><td><code>MonteCarloUQ</code> (+ <code>UQResult</code>): corre N sims con parámetros inciertos (en paralelo) y agrega la QoI en un sensor. <code>_run_sample</code> es la función que ejecuta cada proceso.</td></tr>
+</table>
+
+<h3>Capa 4 · Presentación (<code>onda2d/presentation/</code>) — la interfaz</h3>
+<table>
+<tr><th>Archivo</th><th>Contenido</th></tr>
+<tr><td><code>app.py</code></td><td>Según <code>display.mode</code>: <code>run_graphic</code> (ventana + valores en consola), <code>run_matrix</code> (matriz en terminal), <code>run_uq</code> (histogramas MC). <code>main()</code> despacha por modo. Helpers <code>_advance</code>, <code>_print_stats</code>.</td></tr>
+</table>
+
+<h3>Raíz del proyecto</h3>
+<table>
+<tr><th>Archivo</th><th>Contenido</th></tr>
+<tr><td><code>main.py</code></td><td>Punto de entrada: llama a <code>onda2d.presentation.app.main()</code>.</td></tr>
+<tr><td><code>config.yaml</code></td><td>Toda la parametrización (ver §20).</td></tr>
+<tr><td><code>Makefile</code></td><td>Comandos con venv autocontenido: <code>run</code>, <code>test</code>, <code>list</code>, <code>clean</code>.</td></tr>
+<tr><td><code>requirements.txt</code></td><td>Dependencias: <code>numpy</code>, <code>matplotlib</code>, <code>pyyaml</code>, <code>pytest</code>.</td></tr>
+<tr><td><code>__init__.py</code> (varios)</td><td>Marcan cada carpeta como paquete y re-exportan lo público. <b>Importante:</b> <code>solvers/__init__.py</code> importa <code>fdtd</code> y <code>method_of_lines</code> — ese import <i>con efecto secundario</i> es lo que ejecuta los <code>@solver</code> y registra los métodos (patrón plugin).</td></tr>
+</table>
+
+<h2 class="sec" id="patrones">17. Patrones de diseño</h2>
+<table>
+<tr><th>Patrón</th><th>Dónde</th><th>Para qué</th></tr>
+<tr><td><b>Layered architecture</b></td><td>todo el paquete</td><td>Separar responsabilidades; dependencias hacia adentro.</td></tr>
+<tr><td><b>Strategy</b></td><td><code>Solver</code> + fdtd/rk4/euler</td><td>El método numérico es intercambiable detrás de una interfaz común.</td></tr>
+<tr><td><b>Registry + Factory Method</b></td><td><code>registry.py</code> (<code>@solver</code>, <code>create_solver</code>)</td><td>Registrar y crear métodos por nombre. Agregar uno = soltar un archivo.</td></tr>
+<tr><td><b>Template Method</b></td><td><code>MoLSolver</code> → RK4/Euler</td><td>La base define el esqueleto (estado, <code>_rhs</code>, <code>step</code>); cada método solo implementa <code>_advance()</code>.</td></tr>
+<tr><td><b>Facade</b></td><td><code>Simulation</code></td><td>API simple que esconde el cableado interno.</td></tr>
+<tr><td><b>Builder</b></td><td><code>builder.py</code></td><td>Compone la simulación desde el config; aísla a la presentación del dominio.</td></tr>
+<tr><td><b>Externalized configuration</b></td><td><code>config.yaml</code> + <code>settings.py</code></td><td>Toda la parametrización fuera del código, validada, con defaults.</td></tr>
+<tr><td><b>Plugin / side-effect import</b></td><td><code>solvers/__init__.py</code></td><td>Importar un módulo auto-registra su método vía <code>@solver</code>.</td></tr>
+</table>
+
+<h2 class="sec" id="flujo">18. Flujo de datos</h2>
+<pre><code>config.yaml ──▶ settings.load_config() ──▶ AppConfig
+                                              │
+                          builder.build_simulation(cfg) ──▶ Simulation(Grid, Problem, Solver)
+                          builder.build_rain(cfg, grid) ──▶ RainMonteCarlo
+                                              │
+                              presentation.app.main()   (despacha por display.mode)
+                                              │
+      ┌───────────── cada frame / paso ──────────────┐
+      │  rain.rain_on(sim, Δt)   # gotas Poisson       │
+      │  sim.step(substeps)      # avanza el método    │
+      │  dibujar / imprimir      # colores o números    │
+      └───────────────────────────────────────────────┘</code></pre>
+
+<h2 class="sec" id="vars">19. Variables clave</h2>
+<table>
+<tr><th>Variable</th><th>Significado</th><th>Vive en</th></tr>
+<tr><td><code>nx, ny</code></td><td>Celdas de la malla en x, y.</td><td>grid</td></tr>
+<tr><td><code>h</code></td><td>Separación entre celdas (dx=dy).</td><td>grid</td></tr>
+<tr><td><code>c</code></td><td>Velocidad de la onda.</td><td>problem</td></tr>
+<tr><td><code>γ (damping)</code></td><td>Amortiguamiento (0 = sin pérdidas).</td><td>problem</td></tr>
+<tr><td><code>boundary</code></td><td>Frontera: mur / dirichlet / neumann.</td><td>problem</td></tr>
+<tr><td><code>courant</code></td><td>C = c·Δt/h (controla estabilidad).</td><td>solver</td></tr>
+<tr><td><code>dt (Δt)</code></td><td>Paso temporal, derivado: Δt = C·h/c.</td><td>solver (propiedad)</td></tr>
+<tr><td><code>u_prev, u, u_next</code> / <code>u, v</code></td><td>Estado interno del método (3 instantes en FDTD; posición+velocidad en RK/Euler).</td><td>solver</td></tr>
+<tr><td><code>substeps</code></td><td>Pasos de tiempo por frame (velocidad del tiempo).</td><td>simulation</td></tr>
+<tr><td><code>vmax</code></td><td>Límite de color (±vmax = valle/cresta).</td><td>display</td></tr>
+<tr><td><code>interval_ms</code></td><td>Milisegundos entre frames.</td><td>display</td></tr>
+<tr><td><code>mode</code></td><td>graphic | matrix | uq.</td><td>display</td></tr>
+<tr><td><code>rate, amp, width, margin, seed</code></td><td>Parámetros de la lluvia Poisson.</td><td>rain</td></tr>
+<tr><td><code>samples, c_std, sensor, workers…</code></td><td>Parámetros del estudio UQ.</td><td>uq</td></tr>
+</table>
+
+<h2 class="sec" id="config">20. Referencia de <code>config.yaml</code></h2>
+<pre><code><span class="k">grid</span>:    { nx: 220, ny: 220, h: 0.5 }              <span class="c"># la malla</span>
+<span class="k">problem</span>: { c: 1.0, damping: 0.02, boundary: dirichlet }  <span class="c"># mur|dirichlet|neumann</span>
+<span class="k">solver</span>:  { method: fdtd, courant: 0.5 }            <span class="c"># fdtd|rk4|euler</span>
+<span class="k">simulation</span>: { substeps: 3 }                       <span class="c"># pasos por frame</span>
+<span class="k">display</span>: { mode: graphic, vmax: 1.0, interval_ms: 15 } <span class="c"># graphic|matrix|uq</span>
+<span class="k">initial_pulses</span>: []                                 <span class="c"># [{x,y,amp,width}, ...]</span>
+<span class="k">rain</span>:                                              <span class="c"># lluvia Monte Carlo (Poisson)</span>
+  enabled: true
+  rate: 0.8            <span class="c"># gotas por unidad de tiempo</span>
+  amp: [0.3, 0.9]  ·  width: [2.0, 4.0]  ·  margin: 8  ·  seed: null
+<span class="k">uq</span>:                                                <span class="c"># solo con display.mode: uq</span>
+  samples: 120  ·  nx: 120  ·  ny: 120  ·  steps: 300
+  c_std: 0.1           <span class="c"># incertidumbre relativa de c (±10%)</span>
+  sensor: [0.75, 0.5]  ·  pulse: [0.5, 0.5]  ·  seed: null  ·  workers: 4</code></pre>
+<p class="note">Si falta una clave, se usa el valor por defecto (<code>settings.DEFAULTS</code>). El
+cargador valida <code>boundary</code> y <code>mode</code>.</p>
+
+<h2 class="sec" id="modos">21. Los tres modos de ejecución</h2>
+<table>
+<tr><th>Modo</th><th>Qué hace</th></tr>
+<tr><td><code>graphic</code></td><td><b>Ventana</b> con el campo a colores (la simulación) + los valores en vivo en la <b>consola</b>. Click en el campo = tira una gota. Cualquier tamaño de malla.</td></tr>
+<tr><td><code>matrix</code></td><td>Imprime la <b>matriz completa de números</b> en la <b>terminal</b> (sin ventana), refrescándose. Para que se lea, usa malla chica (≤ ~40×40). Ctrl+C para salir.</td></tr>
+<tr><td><code>uq</code></td><td>Corre el <b>estudio Monte Carlo de incertidumbre</b> (N sims en paralelo) y muestra histogramas de la QoI + estadísticas en consola.</td></tr>
+</table>
+
+<h2 class="sec" id="correr">22. Cómo correr</h2>
+<table>
+<tr><th>Comando</th><th>Qué hace</th></tr>
+<tr><td><code>make run</code></td><td>Crea el venv si falta y corre la simulación (según <code>display.mode</code>).</td></tr>
+<tr><td><code>make test</code></td><td>Corre los 44 tests.</td></tr>
+<tr><td><code>make list</code></td><td>Lista los métodos numéricos registrados.</td></tr>
+<tr><td><code>make clean</code></td><td>Borra el venv y las cachés.</td></tr>
+</table>
+<h4>Agregar un método numérico nuevo</h4>
+<ol>
+<li>Crear <code>onda2d/solvers/mi_metodo.py</code> con una clase <code>@solver("mi_metodo")</code> que implemente la interfaz <code>Solver</code> (o herede de <code>MoLSolver</code> e implemente <code>_advance()</code>).</li>
+<li>Importarlo en <code>onda2d/solvers/__init__.py</code>.</li>
+</ol>
+<p>Aparece solo en <code>make list</code> y disponible con <code>solver.method: mi_metodo</code>.
+Nada más se toca — ese es el pago de la arquitectura Strategy + Registry.</p>
+
+<h2 class="sec" id="tests">23. Tests</h2>
+<p>44 tests con <code>pytest</code>, organizados por capa. Verifican comportamiento, no solo que “no
+crashee”:</p>
+<table>
+<tr><th>Archivo</th><th>Qué prueba</th></tr>
+<tr><td><code>test_domain.py</code></td><td>Malla (formas, gota), Laplaciano (∇² de una constante = 0, de una parábola = 4), normalización de <code>boundary</code>.</td></tr>
+<tr><td><code>test_solvers.py</code></td><td>Registro de métodos, Courant→dt, reposo se mantiene, el pulso se propaga, estable no diverge, inestable diverge, simetría radial, reset; y para rk4/euler: propagación, estabilidad, euler inestable, rechazo de mur.</td></tr>
+<tr><td><code>test_application.py</code></td><td>La fachada lee parámetros, add_pulse+step, energía casi conservada sin pérdidas, damping reduce energía, builder desde config.</td></tr>
+<tr><td><code>test_settings.py</code></td><td>Defaults, merge parcial, boundary/mode inválidos fallan, el config.yaml real parsea.</td></tr>
+<tr><td><code>test_rain.py</code></td><td>Poisson (rate=0 no llueve), reproducibilidad por semilla, gotas dentro del margen, from_config on/off.</td></tr>
+<tr><td><code>test_uq.py</code></td><td>Formas de salida, reproducibilidad por semilla, c_std=0 no varía c.</td></tr>
+</table>
+
+<h2 class="sec" id="historia">24. Decisiones de diseño (por qué está así)</h2>
+<table>
+<tr><th>Decisión</th><th>Motivo</th></tr>
+<tr><td>Núcleo (dominio) separado de la UI</td><td>Poder testear la física sin abrir ventanas y cambiar la UI sin tocar la física.</td></tr>
+<tr><td>Método numérico como Strategy + Registry</td><td>Agregar/comparar métodos (fdtd, rk4, euler…) sin tocar el resto.</td></tr>
+<tr><td>Sin sliders/botones; todo en <code>config.yaml</code></td><td>Configuración externalizada, reproducible, versionable; la ventana queda limpia.</td></tr>
+<tr><td>Δt derivado del Courant</td><td>Que el parámetro de estabilidad sea directo y se pueda “ver” la inestabilidad.</td></tr>
+<tr><td>La matriz de números va a la terminal (modo matrix)</td><td>500×500 = 250k números no caben en una ventana; la terminal sí los muestra todos.</td></tr>
+<tr><td>Monte Carlo para lluvia y UQ (no como solver)</td><td>La ecuación es hiperbólica: MC no la resuelve, pero sí modela fuentes aleatorias e incertidumbre.</td></tr>
+<tr><td>UQ con multiprocessing</td><td>Cada corrida es independiente → paralelismo real (a diferencia de la animación en vivo).</td></tr>
+</table>
+
+<h2 class="sec" id="glosario">25. Glosario</h2>
+<table>
+<tr><td><b>PDE</b></td><td>Ecuación diferencial en derivadas parciales.</td></tr>
+<tr><td><b>Hiperbólica</b></td><td>Clase de PDE (como la de onda) con propagación a velocidad finita.</td></tr>
+<tr><td><b>FDTD</b></td><td>Finite-Difference Time-Domain: diferencias finitas en tiempo y espacio.</td></tr>
+<tr><td><b>Leapfrog</b></td><td>Esquema temporal centrado que usa dos instantes previos.</td></tr>
+<tr><td><b>Método de líneas</b></td><td>Discretizar solo el espacio y quedarse con un sistema de ODEs en el tiempo.</td></tr>
+<tr><td><b>Runge–Kutta</b></td><td>Familia de integradores de ODEs; RK4 promedia 4 pendientes por paso.</td></tr>
+<tr><td><b>Laplaciano (∇²)</b></td><td>Operador que mide la curvatura / desvío respecto al entorno.</td></tr>
+<tr><td><b>CFL / Courant</b></td><td>Condición y número que garantizan estabilidad del esquema explícito.</td></tr>
+<tr><td><b>Proceso de Poisson</b></td><td>Modelo de eventos aleatorios independientes con una tasa media.</td></tr>
+<tr><td><b>Monte Carlo</b></td><td>Usar muestreo aleatorio para modelar o estimar algo.</td></tr>
+<tr><td><b>UQ</b></td><td>Uncertainty Quantification: cómo la incertidumbre de las entradas afecta la salida.</td></tr>
+<tr><td><b>QoI</b></td><td>Quantity of Interest: la magnitud concreta que se mide (aquí, en un sensor).</td></tr>
+<tr><td><b>Strategy / Facade / Builder / Template Method</b></td><td>Patrones de diseño (ver §17).</td></tr>
+</table>
+
+<hr>
+<p style="color:#6b90a5;font-size:.85rem">Documentación del proyecto <b>ecuación de onda 2D</b> ·
+arquitectura multicapa · métodos FDTD / RK4 / Euler · Monte Carlo (lluvia + UQ). Pensada para
+entenderlo desde cero.</p>
+
+</main>
+</div>
+</body>
+</html>
